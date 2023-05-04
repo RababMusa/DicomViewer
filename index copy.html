@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dicom viewer</title>
+   
+    <link href="https://netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="css/reset.css">
+	<link rel="stylesheet" href="css/app.css">
+	<link rel="stylesheet" href="css/icon-classes.css">
+	<link rel="stylesheet" href="css/tool-help.css">
+    <style>
+        .btn-default{
+            margin-bottom: 5px;
+        }
+        .cornerstone-canvas{
+            height: 400px;
+            width: 400px;
+        }
+        body,.cornerstone-element-wrapper-help,.wrapper{
+            background-color: #fff;
+        }
+        .cornerstone-element-help{
+            height: 400px;
+            width: 400px;
+            position: relative;
+        }
+        h1{
+            font-size: 36px;
+            font-weight: bold;
+            color: #000;
+            font-family: sans-serif;
+            margin-bottom: 20px;
+        }
+        ul.tool-category{
+            background-color: #fff;            
+            overflow: hidden;
+        }
+        ul.tool-category li a{
+            color: #000;
+        }
+        ul.tool-category li:hover a,li a.active, li a.active:hover{
+            color: #000;
+            text-decoration: none;
+
+        }
+        a:focus{
+            outline: none;
+            text-decoration: none;
+        }
+        li a:hover{
+            background-color: #fff; 
+        }
+        main{
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <main class="container" >
+    <h1>View a DICOM image using js</h1>
+    <div id="app">
+		<div class="wrapper">
+
+			<!-- Select Active Tool -->
+			<ul class="tool-category" data-tool-category="tools">
+				<li><a href="#" data-tool="FreehandRoi">FreehandRoi</a></li>
+				<!-- <li><a href="#" data-tool="FreehandRoiSculptor">FreehandRoiSculptor</a></li>
+				<li><a href="#" id="saveToolState">Save Freehand</a></li>
+				<li><a href="#" id="clearToolState">Clear Freehand</a></li>
+				<li><a href="#" id="loadToolState">Load Freehand State</a></li> -->
+			</ul>
+			<ul class="tool-category" data-tool-category="mousewheel">
+				<li><a href="#" data-tool="StackScrollMouseWheel" data-tool-interaction="wheel">StackScrollMouseWheel</a></li>
+				<li><a href="#" data-tool="ZoomMouseWheel" data-tool-interaction="wheel">ZoomMouseWheel</a></li>
+			</ul>
+
+			<!-- Our beautiful element targets -->
+			<!-- <div class="cornerstone-element-wrapper-help">
+				<div class="cornerstone-element-help" data-index="0" oncontextmenu="return false"></div>
+			
+			</div> -->
+		</div>
+	</div>
+    
+  
+    <div class="cornerstone-element-help"  data-index="0" oncontextmenu="return false">
+        <!-- <canvas class="container cornerstone-canvas" style="margin-top: 50px; display: block; height: 400px; width: 400px;" height="300" width="300" >
+        </canvas> -->
+    </div>
+    <div style="position: absolute;
+        top: 30%;
+        display: flex;
+        flex-direction: column;"  data-tool-category="tools"> 
+        <button id="zoomIn" type="button" class="btn btn-default">
+            <i class="fa-solid fa-magnifying-glass-plus"></i>
+        </button>
+        <button id="zoomOut" type="button" class="btn btn-default">
+            <i class="fa-solid fa-magnifying-glass-minus"></i>
+        </button>
+        <button id="reset" type="button" class="btn btn-default">
+            <i class="fa-solid fa-ban"></i>
+        </button>
+        <!-- <ul class="tool-category active" data-tool-category="tools">
+            <li>
+                <a id="clearToolState" href="#" class="btn btn-default">
+                    clear
+                </a>
+            </li>
+        </ul> -->
+       
+    </div>
+    </main>
+    
+
+    <!-- include special code for these examples which provides images -->
+    <!-- <script src="../imageLoader.js"></script> -->
+
+    <script src="https://unpkg.com/hammerjs@2.0.8/hammer.js"></script>
+    <script src="https://unpkg.com/cornerstone-core/dist/cornerstone.js"></script>
+    <script src="https://unpkg.com/cornerstone-math@0.1.6/dist/cornerstoneMath.js"></script>
+
+    <script src="js/cornerstoneTools.js"></script>
+    <script>window.cornerstoneTools || document.write('<script src="https://unpkg.com/cornerstone-tools">\x3C/script>')</script>
+
+    <script src="./js/exampleImageIdLoader.js"></script>
+
+    <script>
+        cornerstoneTools.init();
+        const imageId = 'example://1';
+        // const elements = document.getElementById('content');
+        // Enable & Setup all of our elements
+	   const element = document.querySelector('.cornerstone-element-help');
+        cornerstone.enable(element);
+        cornerstone.loadImage(imageId).then(function(image) {
+            cornerstone.displayImage(element, image);
+            
+        });
+
+        element.tabIndex = 0;
+	    element.focus();
+
+        
+        // Add event handlers to zoom the image in and out
+        document.getElementById('zoomIn').addEventListener('click', function (e) {
+            const viewport = cornerstone.getViewport(element);
+            viewport.scale += 0.25;
+            cornerstone.setViewport(element, viewport);
+        });
+        document.getElementById('zoomOut').addEventListener('click', function (e) {
+            const viewport = cornerstone.getViewport(element);
+            viewport.scale -= 0.25;
+            cornerstone.setViewport(element, viewport);
+        });
+        document.getElementById('reset').addEventListener('click', function (e) {
+            cornerstone.reset(element);
+        });
+
+        // API CALLS
+        const apiButtons = document.querySelectorAll('button[api-call]');
+        Array.from(apiButtons).forEach(apiBtn => {
+            const apiCall = apiBtn.getAttribute('api-call');
+
+            apiBtn.addEventListener('mousedown', (evt) => {
+                freehandApiCall(apiCall);
+            });
+        });
+
+// Iterate over all tool buttons
+const toolButtons = document.querySelectorAll('a[data-tool]');
+	Array.from(toolButtons).forEach(toolBtn => {
+		// Add the tool
+		const toolName = toolBtn.getAttribute('data-tool');
+		const apiTool = cornerstoneTools[`${toolName}Tool`];
+
+		if (apiTool) {
+			cornerstoneTools.addTool(apiTool);
+		} else {
+			console.warn(`unable to add tool with name ${toolName}Tool`);
+			console.log(cornerstoneTools)
+		}
+
+		// Setup button listener
+		// Prevent right click context menu for our menu buttons
+		toolBtn.addEventListener('contextmenu', event => event.preventDefault(), true);
+		// Prevent middle click opening a new tab on Chrome & FF
+		toolBtn.addEventListener('auxclick', event => {
+			if (event.button && event.button === 1) {
+				event.preventDefault();
+			}
+		}, false);
+		toolBtn.addEventListener('mousedown', (evt) => {
+			const mouseButtonMask = evt.buttons
+				? evt.buttons
+				: convertMouseEventWhichToButtons(evt.which)
+			const toolInteraction = evt.target.getAttribute('data-tool-interaction')
+			setButtonActive(toolName, mouseButtonMask, toolInteraction);
+			cornerstoneTools.setToolActive(toolName, { mouseButtonMask });
+
+			evt.preventDefault();
+			evt.stopPropagation();
+			evt.stopImmediatePropagation();
+			return false;
+		});
+	});
+
+
+    // Activate first tool
+	cornerstoneTools.setToolActive(cornerstoneTools.store.state.tools[0].name, { mouseButtonMask: 1 });
+
+const setToolCategoryActive = (categoryName) => {
+    Array.from(toolCategoryLinks).forEach(toolLink => {
+        if (categoryName === toolLink.getAttribute('data-category')) {
+            toolLink.classList.remove('active');
+            toolLink.classList.add('active');
+        } else {
+            toolLink.classList.remove('active');
+        }
+    });
+
+    Array.from(toolCategorySections).forEach(toolCategorySection => {
+        if (categoryName === toolCategorySection.getAttribute('data-tool-category')) {
+            toolCategorySection.classList.remove('active');
+            toolCategorySection.classList.add('active');
+        } else {
+            toolCategorySection.classList.remove('active');
+        }
+    });
+}
+
+const setButtonActive = (toolName, mouseButtonMask, toolInteraction) => {
+    Array.from(toolButtons).forEach(toolBtn => {
+        // Classes we need to set & remove
+        let mouseButtonIcon = `mousebutton-${mouseButtonMask}`;
+        let touchIcon = `touch-1`
+
+        // Update classes depending on the toolInteraction we clicked
+        if (toolInteraction === 'none') {
+            return;
+        } else if (toolInteraction === 'multitouch') {
+            mouseButtonIcon = null;
+            touchIcon = 'touch-2';
+        } else if (toolInteraction === 'pinch') {
+            mouseButtonIcon = null;
+            touchIcon = 'touch-pinch';
+        } else if (toolInteraction === 'wheel') {
+            mouseButtonIcon = 'mousebutton-wheel';
+            touchIcon = null;
+        }
+
+        // Update our target button
+        if (toolName === toolBtn.getAttribute('data-tool')) {
+            toolBtn.className = "";
+            toolBtn.classList.add('active');
+            if (mouseButtonIcon) {
+                toolBtn.classList.add(mouseButtonIcon)
+            }
+            if (touchIcon) {
+                toolBtn.classList.add(touchIcon)
+            }
+            // Remove relevant classes from other buttons
+        } else {
+            if (mouseButtonIcon && toolBtn.classList.contains(mouseButtonIcon)) {
+                toolBtn.classList.remove(mouseButtonIcon);
+            }
+            if (touchIcon && toolBtn.classList.contains(touchIcon)) {
+                toolBtn.classList.remove(touchIcon);
+            }
+            if (toolBtn.classList.length === 1 && toolBtn.classList[0] === 'active') {
+                toolBtn.classList.remove('active');
+            }
+        }
+    });
+}
+
+const convertMouseEventWhichToButtons = (which) => {
+    switch (which) {
+        // no button
+        case 0:
+            return 0;
+        // left
+        case 1:
+            return 1;
+        // middle
+        case 2:
+            return 4;
+        // right
+        case 3:
+            return 2;
+    }
+    return 0;
+}
+
+
+
+        // FREEHAND API //
+
+	const freehandRoiTool = cornerstoneTools.getToolForElement(element, 'FreehandRoi');
+	const freehandRoiSculpterTool = cornerstoneTools.getToolForElement(element, 'FreehandRoiSculptor');
+
+	function freehandApiCall(opperation) {
+		switch (opperation) {
+			case 'always-show-handles':
+				const alwaysShowHandles = freehandRoiTool.alwaysShowHandles;
+				freehandRoiTool.alwaysShowHandles = !alwaysShowHandles;
+				break;
+			case 'set-invalid-color':
+				freehandRoiTool.invalidColor = 'darkred';
+				break;
+			case 'show-cursor-on-hover':
+				const showCursorOnHover = freehandRoiSculptorTool.showCursorOnHover;
+				freehandRoiSculptorTool.showCursorOnHover = !showCursorOnHover;
+				break;
+			case 'limit-radius-outside-region':
+				const limitRadiusOutsideRegion = freehandRoiSculptorTool.limitRadiusOutsideRegion;
+				freehandRoiSculptorTool.limitRadiusOutsideRegion = !limitRadiusOutsideRegion;
+				break;
+			default:
+				return;
+		}
+	}
+
+// API Sliders
+
+const spacingSlider = document.getElementById("spacing");
+	const activeHandleRadiusSlider = document.getElementById("activeHandleRadius");
+	const completeHandleRadiusSlider = document.getElementById("completeHandleRadius");
+
+	const minSpacingSlider = document.getElementById("minSpacing");
+	const maxSpacingSlider = document.getElementById("maxSpacing");
+	const hoverCursorFadeAlphaSlider = document.getElementById("hoverCursorFadeAlpha");
+	const hoverCursorFadeDistanceSlider = document.getElementById("hoverCursorFadeDistance");
+
+
+	spacingSlider.defaultValue = 5;
+	activeHandleRadiusSlider.defaultValue = 3;
+	completeHandleRadiusSlider.defaultValue = 6;
+
+	minSpacingSlider.defaultValue = 5;
+	maxSpacingSlider.defaultValue = 20;
+	hoverCursorFadeAlphaSlider.defaultValue = 122;
+	hoverCursorFadeDistanceSlider.defaultValue = 120;
+
+
+    spacingSlider.addEventListener('input', event => {
+		freehandRoiTool.spacing = Number(event.target.value);
+	});
+
+	activeHandleRadiusSlider.addEventListener('input', event => {
+		freehandRoiTool.activeHandleRadius = Number(event.target.value);
+	});
+
+	completeHandleRadiusSlider.addEventListener('input', event => {
+		freehandRoiTool.completeHandleRadius = Number(event.target.value);
+	});
+
+	minSpacingSlider.addEventListener('input', event => {
+		freehandRoiSculptorTool.minSpacing = Number(event.target.value);
+	});
+
+	maxSpacingSlider.addEventListener('input', event => {
+		freehandRoiSculptorTool.maxSpacing = Number(event.target.value);
+	});
+
+	hoverCursorFadeAlphaSlider.addEventListener('input', event => {
+		const normalisedAlpha = Number(event.target.value) / 255.0;
+
+		freehandRoiSculptorTool.hoverCursorFadeAlpha = normalisedAlpha;
+	});
+
+	hoverCursorFadeDistanceSlider.addEventListener('input', event => {
+		// Slider transformed from (100 <-> 200) to (1.0 <-> 2.0).
+		const realValue = Math.floor(Number(event.target.value) / 100.0);
+
+		freehandRoiSculptorTool.hoverCursorFadeDistance = realValue;
+	});
+
+	const saveToolStateButton = document.getElementById('saveToolState');
+	const clearToolStateButton = document.getElementById('clearToolState');
+	const loadToolStateButton = document.getElementById('loadToolState');
+	let toolState = null;
+
+	saveToolStateButton.addEventListener('click', event => {
+		const toolStateString = JSON.stringify(cornerstoneTools.getToolState(element, freehandRoiTool.name));
+
+		if (toolStateString) {
+			toolState = JSON.parse(toolStateString);
+			alert("saved");
+		} else {
+			alert("nothing to save!");
+		}
+	});
+
+	clearToolStateButton.addEventListener('click', event => {
+		cornerstoneTools.clearToolState(element, freehandRoiTool.name);
+
+		cornerstone.updateImage(element);
+	});
+
+	loadToolStateButton.addEventListener('click', event => {
+		if (toolState) {
+			cornerstoneTools.clearToolState(element, freehandRoiTool.name);
+
+			toolState.data.forEach((data) => {
+				cornerstoneTools.addToolState(element, freehandRoiTool.name, data);
+			})
+
+			cornerstone.updateImage(element);
+			alert('loaded');
+		} else {
+			alert('Nothing has been saved!');
+		}
+	});
+
+	element.addEventListener('keydown', event => {
+		if (event.keyCode === 27) {
+			freehandRoiTool.cancelDrawing(element);
+		}
+		if (event.keyCode === 13) {
+			freehandRoiTool.completeDrawing(element)
+		}
+	});
+    </script>
+   
+</body>
+</html>
